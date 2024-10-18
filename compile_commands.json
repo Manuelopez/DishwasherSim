@@ -1,0 +1,55 @@
+[
+          {
+            "directory": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files",
+            "file": "/Users/manuelopez/Desktop/code/graduated/dishwasher/src/main.c",
+            "command": "cc -MMD -MP -DDEBUG -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33 -I/Users/manuelopez/Desktop/code/graduated/dishwasher/src -I/Users/manuelopez/Desktop/code/graduated/dishwasher/include -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/external -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/external/glfw/include -Wshadow -g -std=c99 -Wno-deprecated-declarations -o /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/dishwasher/main.o -MF /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/dishwasher/main.d -c /Users/manuelopez/Desktop/code/graduated/dishwasher/src/main.c"
+          }
+,
+          {
+            "directory": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files",
+            "file": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/raudio.c",
+            "command": "cc -MMD -MP -DDEBUG -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33 -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/external/glfw/include -g -Wno-deprecated-declarations -o /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/raudio.o -MF /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/raudio.d -c /Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/raudio.c"
+          }
+,
+          {
+            "directory": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files",
+            "file": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rcore.c",
+            "command": "cc -MMD -MP -DDEBUG -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33 -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/external/glfw/include -g -Wno-deprecated-declarations -o /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rcore.o -MF /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rcore.d -c /Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rcore.c"
+          }
+,
+          {
+            "directory": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files",
+            "file": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rglfw.c",
+            "command": "cc -MMD -MP -DDEBUG -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33 -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/external/glfw/include -g -Wno-deprecated-declarations -o /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rglfw.o -MF /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rglfw.d -c /Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rglfw.c"
+          }
+,
+          {
+            "directory": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files",
+            "file": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rmodels.c",
+            "command": "cc -MMD -MP -DDEBUG -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33 -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/external/glfw/include -g -Wno-deprecated-declarations -o /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rmodels.o -MF /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rmodels.d -c /Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rmodels.c"
+          }
+,
+          {
+            "directory": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files",
+            "file": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rshapes.c",
+            "command": "cc -MMD -MP -DDEBUG -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33 -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/external/glfw/include -g -Wno-deprecated-declarations -o /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rshapes.o -MF /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rshapes.d -c /Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rshapes.c"
+          }
+,
+          {
+            "directory": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files",
+            "file": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rtext.c",
+            "command": "cc -MMD -MP -DDEBUG -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33 -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/external/glfw/include -g -Wno-deprecated-declarations -o /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rtext.o -MF /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rtext.d -c /Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rtext.c"
+          }
+,
+          {
+            "directory": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files",
+            "file": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rtextures.c",
+            "command": "cc -MMD -MP -DDEBUG -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33 -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/external/glfw/include -g -Wno-deprecated-declarations -o /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rtextures.o -MF /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/rtextures.d -c /Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/rtextures.c"
+          }
+,
+          {
+            "directory": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files",
+            "file": "/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/utils.c",
+            "command": "cc -MMD -MP -DDEBUG -DPLATFORM_DESKTOP -DGRAPHICS_API_OPENGL_33 -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src -I/Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/external/glfw/include -g -Wno-deprecated-declarations -o /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/utils.o -MF /Users/manuelopez/Desktop/code/graduated/dishwasher/build/build_files/obj/ARM64/Debug/raylib/utils.d -c /Users/manuelopez/Desktop/code/graduated/dishwasher/build/external/raylib-master/src/utils.c"
+          }
+]
