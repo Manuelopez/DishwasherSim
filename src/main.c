@@ -3,69 +3,361 @@ Raylib example file.
 This is an example main file for a simple raylib project.
 Use this as a starting point or replace it with your code.
 
-For a C++ project simply rename the file to .cpp and re-run the build script 
+For a C++ project simply rename the file to .cpp and re-run the build script
 
 -- Copyright (c) 2020-2024 Jeffery Myers
 --
---This software is provided "as-is", without any express or implied warranty. In no event 
---will the authors be held liable for any damages arising from the use of this software.
+--This software is provided "as-is", without any express or implied warranty. In
+no event
+--will the authors be held liable for any damages arising from the use of this
+software.
 
---Permission is granted to anyone to use this software for any purpose, including commercial 
---applications, and to alter it and redistribute it freely, subject to the following restrictions:
+--Permission is granted to anyone to use this software for any purpose,
+including commercial
+--applications, and to alter it and redistribute it freely, subject to the
+following restrictions:
 
---  1. The origin of this software must not be misrepresented; you must not claim that you 
---  wrote the original software. If you use this software in a product, an acknowledgment 
+--  1. The origin of this software must not be misrepresented; you must not
+claim that you
+--  wrote the original software. If you use this software in a product, an
+acknowledgment
 --  in the product documentation would be appreciated but is not required.
 --
---  2. Altered source versions must be plainly marked as such, and must not be misrepresented
+--  2. Altered source versions must be plainly marked as such, and must not be
+misrepresented
 --  as being the original software.
 --
 --  3. This notice may not be removed or altered from any source distribution.
 
 */
 
+#include "assert.h"
 #include "raylib.h"
+#include "raymath.h"
+#include "stdio.h"
 
-#include "resource_dir.h"	// utility header for SearchAndSetResourceDir
+#include "range.h"
 
-int main ()
-{
-	// Tell the window to use vysnc and work on high DPI displays
-	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+#include "resource_dir.h" // utility header for SearchAndSetResourceDir
+#include <_stdio.h>
+#include <_string.h>
+#include <malloc/_malloc.h>
+#include <stdbool.h>
 
-	// Create the window and OpenGL context
-	InitWindow(1280, 800, "Hello Raylib");
+#define MAX_ENTITY_COUNT 1024
 
-	// Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
-	SearchAndSetResourceDir("resources");
+bool almost_equals(float a, float b, float epsilon) {
+  return fabs(a - b) <= epsilon;
+}
+bool animate_f32_to_target(float *value, float target, float delta_t,
+                           float rate) {
+  *value += (target - *value) * (1.0 - pow(2.0f, -rate * delta_t));
+  if (almost_equals(*value, target, 0.001f)) {
+    *value = target;
 
-	// Load a texture from the resources directory
-	Texture wabbit = LoadTexture("wabbit_alpha.png");
-	
-	// game loop
-	while (!WindowShouldClose())		// run the loop untill the user presses ESCAPE or presses the Close button on the window
-	{
-		// drawing
-		BeginDrawing();
+    return true; // reached
+  }
+  return false;
+}
 
-		// Setup the backbuffer for drawing (clear color and depth buffers)
-		ClearBackground(BLACK);
+void animate_v2_to_target(Vector2 *value, Vector2 target, float delta_t,
+                          float rate) {
+  float a = value->x;
+  animate_f32_to_target(&(value->x), target.x, delta_t, rate);
 
-		// draw some text using the default font
-		DrawText("Hello Raylib", 200,200,20,WHITE);
+  float b = value->x;
 
-		// draw our texture to the screen
-		DrawTexture(wabbit, 400, 200, WHITE);
-		
-		// end the frame and get ready for the next one  (display frame, poll input, etc...)
-		EndDrawing();
-	}
+  animate_f32_to_target(&(value->y), target.y, delta_t, rate);
+}
 
-	// cleanup
-	// unload our texture so it can be cleaned up
-	UnloadTexture(wabbit);
+const int tile_width = 8;
+int world_pos_to_tile_pos(float world_pos) {
+  return roundf(world_pos / (float)tile_width);
+}
+int tile_pos_to_world_pos(int tile_pos) {
+  return (float)tile_pos * (float)tile_width;
+}
 
-	// destory the window and cleanup the OpenGL context
-	CloseWindow();
-	return 0;
+Vector2 round_v2_to_tile(Vector2 world_pos) {
+  world_pos.x = tile_pos_to_world_pos(world_pos_to_tile_pos(world_pos.x));
+  world_pos.y = tile_pos_to_world_pos(world_pos_to_tile_pos(world_pos.y));
+  return world_pos;
+}
+
+typedef enum EntityArcheType {
+  nil = 0,
+  arch_troll = 1,
+  arch_goblin = 2,
+  arch_player = 3,
+  arch_card_fireball = 4
+
+} EntityArcheType;
+
+typedef struct Sprite {
+  Texture image;
+  Vector2 size;
+} Sprite;
+
+typedef enum SpriteId {
+  SPRITE_NIL,
+  SPRITE_PLAYER,
+  SPRITE_GOBLIN,
+  SPRITE_TROLL,
+  SPRITE_CARD_FIREBALL,
+  SPRITE_MAX
+} SpriteId;
+
+typedef struct Entity {
+  Vector2 pos;
+  bool is_valid;
+  Texture *sprite;
+  EntityArcheType type;
+  SpriteId sprite_id;
+} Entity;
+
+// maybe make this into an x macro
+typedef struct World {
+  Entity entities[MAX_ENTITY_COUNT];
+} World;
+
+World *world = 0;
+
+Entity *create_entity() {
+  Entity *entity_found = 0;
+
+  for (int i = 0; i < MAX_ENTITY_COUNT; i++) {
+    Entity *existing_entity = &world->entities[i];
+    if (!existing_entity->is_valid) {
+      entity_found = existing_entity;
+      break;
+      printf("%i - times", i);
+    }
+  }
+
+  //  assert(entity_found, "No more free entities");
+  assert(entity_found);
+
+  entity_found->is_valid = true;
+  return entity_found;
+}
+
+void destroy_entity(Entity *en) { memset(en, 0, sizeof(Entity)); }
+void setup_troll(Entity *en) {
+  en->type = arch_troll;
+  en->sprite_id = SPRITE_TROLL;
+  //...
+}
+
+void setup_player(Entity *en) {
+  en->type = arch_player;
+  en->sprite_id = SPRITE_PLAYER;
+  //...
+}
+
+void setup_goblin(Entity *en) {
+  en->type = arch_goblin;
+  en->sprite_id = SPRITE_GOBLIN;
+  //...
+}
+
+Sprite sprites[SPRITE_MAX];
+Sprite *get_sprite(SpriteId id) {
+  if (id >= 0 && id < SPRITE_MAX) {
+    return &sprites[id];
+  }
+
+  return &sprites[0];
+}
+
+int main() {
+  // init window
+  SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+  const int screen_width = 800;
+  const int screen_height = 450;
+  InitWindow(screen_width, screen_height, "Hello Raylib");
+
+  // set up resources folder
+  SearchAndSetResourceDir("resources");
+
+  // set up golbal variables
+
+  world = (World *)malloc(sizeof(World));
+  if (world == NULL) {
+    fprintf(stderr, "Memory allocation failed\n");
+    return 1;
+  }
+  for (int i = 0; i < MAX_ENTITY_COUNT; i++) {
+    world->entities[i] = (Entity){.is_valid = false};
+  }
+  sprites[SPRITE_PLAYER] =
+      (Sprite){.image = LoadTexture("player.png"), .size = (Vector2){10, 19}};
+  sprites[SPRITE_TROLL] =
+      (Sprite){.image = LoadTexture("troll.png"), .size = (Vector2){8, 14}};
+  sprites[SPRITE_GOBLIN] =
+      (Sprite){.image = LoadTexture("goblin.png"), .size = (Vector2){8, 14}};
+
+  // entities
+  for (int i = 0; i < 2; i++) {
+    Entity *en = create_entity();
+    setup_troll(en);
+    Entity *en2 = create_entity();
+    setup_goblin(en2);
+    en->pos = (Vector2){GetRandomValue(0, 200), GetRandomValue(0, 200)};
+    en->pos = round_v2_to_tile(en->pos);
+    en->pos.y -= tile_width * 0.5;
+
+    en2->pos = (Vector2){GetRandomValue(0, 200), GetRandomValue(0, 200)};
+    en2->pos = round_v2_to_tile(en2->pos);
+
+    en2->pos.y -= (tile_width * 0.5) - 0.1;
+  }
+  Entity *player_entity = create_entity();
+  setup_player(player_entity);
+  assert(player_entity);
+
+  player_entity->pos = (Vector2){800.0f / 2, 450.0f / 2};
+
+  // camera
+  Camera2D camera = {0};
+  camera.zoom = 3.0f;
+  camera.offset = (Vector2){screen_width / 2.0f, screen_height / 2.0f};
+  camera.rotation = 0;
+  camera.target = (Vector2){
+      player_entity->pos.x + (sprites[SPRITE_PLAYER].image.width / 2.0f),
+      player_entity->pos.y + (sprites[SPRITE_PLAYER].image.height / 2.0f)};
+
+  //  game loop
+  while (!WindowShouldClose()) // run the loop untill the user presses ESCAPE or
+  {
+
+    // update player position
+    Vector2 input_axis = {0, 0};
+
+    if (IsKeyDown(KEY_W)) {
+      input_axis.y -= 1;
+    }
+    if (IsKeyDown(KEY_A)) {
+
+      input_axis.x -= 1;
+    }
+    if (IsKeyDown(KEY_S)) {
+
+      input_axis.y += 1;
+    }
+    if (IsKeyDown(KEY_D)) {
+
+      input_axis.x += 1;
+    }
+
+    input_axis = Vector2Normalize(input_axis);
+    player_entity->pos = Vector2Add(
+        player_entity->pos, Vector2Scale(input_axis, 100.0 * GetFrameTime()));
+
+    // camera stuff
+    {
+
+      Vector2 target = player_entity->pos;
+      target.x = target.x + (sprites[SPRITE_PLAYER].image.width) / 2.0f;
+      target.y = target.y + (sprites[SPRITE_PLAYER].image.height) / 2.0f;
+      /* camera.target = (Vector2){ */
+      /*     player_entity->pos.x + (sprites[SPRITE_PLAYER].image.width) / 2.0f,
+       */
+      /*     player_entity->pos.y + (sprites[SPRITE_PLAYER].image.height)
+       * / 2.0f}; */
+      animate_v2_to_target(&camera.target, target, GetFrameTime(), 3.0f);
+    }
+
+    // begin drawind
+    BeginDrawing();
+
+    ClearBackground(LIGHTGRAY);
+
+    // 2d world
+    {
+      BeginMode2D(camera);
+
+      // :mouse pos tester
+      Vector2 mouse_pos = GetScreenToWorld2D(GetMousePosition(), camera);
+      int mouse_tile_x = world_pos_to_tile_pos(mouse_pos.x);
+      int mouse_tile_y = world_pos_to_tile_pos(mouse_pos.y);
+
+      // :tile rendering
+      {
+        int player_tile_x = world_pos_to_tile_pos(player_entity->pos.x);
+        int player_tile_y = world_pos_to_tile_pos(player_entity->pos.y);
+
+        const int tile_radius_x = 40;
+        const int tile_radius_y = 30;
+
+        for (int x = player_tile_x - tile_radius_x;
+             x < player_tile_x + tile_radius_x; x++) {
+          for (int y = player_tile_y - tile_radius_y;
+               y < player_tile_y + tile_radius_y; y++) {
+            if ((x + (y % 2 == 0)) % 2 == 0) {
+              float x_pos = x * tile_width;
+              float y_pos = y * tile_width;
+              Color tile_color = WHITE;
+              if (x == mouse_tile_x && y == mouse_tile_y) {
+                //  tile_color = BLUE;
+              }
+              DrawRectangle(x_pos + (tile_width * -0.5),
+                            y_pos + (tile_width * -0.5), tile_width, tile_width,
+                            tile_color);
+            }
+          }
+        }
+      }
+      {
+
+        for (int i = 0; i < MAX_ENTITY_COUNT; i++) {
+          Entity *en = &world->entities[i];
+          if (en->is_valid) {
+            Sprite *sprite = get_sprite(en->sprite_id);
+            Range2 bounds = range2_make_bottom_happen(sprite->size);
+            bounds = range2_shift(bounds, en->pos);
+            Vector2 rect_size = range2_size(bounds);
+            if (range2_contains(bounds, mouse_pos)) {
+              DrawRectangle(bounds.min.x, bounds.min.y, rect_size.x,
+                            rect_size.y, RED);
+            }
+          }
+        }
+        printf("%f, %f\n", mouse_pos.x, mouse_pos.y);
+      }
+
+      for (int i = 0; i < MAX_ENTITY_COUNT; i++) {
+        Entity *en = &world->entities[i];
+        if (en->is_valid) {
+          switch (en->type) {
+          default: {
+            Sprite *sprite = get_sprite(en->sprite_id);
+            Vector2 pos = Vector2AddValue(en->pos, tile_width * -0.5);
+            DrawTexture(sprite->image, en->pos.x - (sprite->size.x / 2.0f),
+                        en->pos.y, WHITE);
+            char pos_string[100];
+            sprintf(pos_string, "(%.2f - %.2f)", en->pos.x, en->pos.y);
+            DrawText(pos_string, en->pos.x + 10, en->pos.y + 10, 5, BLACK);
+            break;
+          }
+          }
+        }
+      }
+
+      EndMode2D();
+    }
+
+    // end the frame and get ready for the next one  (display frame, poll input,
+    // etc...)
+    EndDrawing();
+  }
+
+  // cleanup
+  // unload our texture so it can be cleaned up
+  UnloadTexture(sprites[SPRITE_TROLL].image);
+  UnloadTexture(sprites[SPRITE_PLAYER].image);
+  UnloadTexture(sprites[SPRITE_GOBLIN].image);
+
+  // destory the window and cleanup the OpenGL context
+  CloseWindow();
+  return 0;
 }
