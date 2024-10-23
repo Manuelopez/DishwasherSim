@@ -39,12 +39,15 @@ misrepresented
 #include "range.h"
 
 #include "resource_dir.h" // utility header for SearchAndSetResourceDir
+#include <_printf.h>
 #include <_stdio.h>
 #include <_string.h>
 #include <malloc/_malloc.h>
+#include <math.h>
 #include <stdbool.h>
 
 #define MAX_ENTITY_COUNT 1024
+const float entity_selection_radius = 16.0f;
 
 bool almost_equals(float a, float b, float epsilon) {
   return fabs(a - b) <= epsilon;
@@ -119,6 +122,12 @@ typedef struct Entity {
 typedef struct World {
   Entity entities[MAX_ENTITY_COUNT];
 } World;
+
+typedef struct WorldFrame {
+  Entity *selected_entity;
+
+} WorldFrame;
+WorldFrame world_frame = {0};
 
 World *world = 0;
 
@@ -204,18 +213,15 @@ int main() {
     setup_goblin(en2);
     en->pos = (Vector2){GetRandomValue(0, 200), GetRandomValue(0, 200)};
     en->pos = round_v2_to_tile(en->pos);
-    en->pos.y -= tile_width * 0.5;
 
     en2->pos = (Vector2){GetRandomValue(0, 200), GetRandomValue(0, 200)};
     en2->pos = round_v2_to_tile(en2->pos);
-
-    en2->pos.y -= (tile_width * 0.5) - 0.1;
   }
   Entity *player_entity = create_entity();
   setup_player(player_entity);
   assert(player_entity);
 
-  player_entity->pos = (Vector2){800.0f / 2, 450.0f / 2};
+  player_entity->pos = (Vector2){0, 0};
 
   // camera
   Camera2D camera = {0};
@@ -230,6 +236,7 @@ int main() {
   while (!WindowShouldClose()) // run the loop untill the user presses ESCAPE or
   {
 
+    world_frame = (WorldFrame){0};
     // update player position
     Vector2 input_axis = {0, 0};
 
@@ -276,10 +283,10 @@ int main() {
     {
       BeginMode2D(camera);
 
-      // :mouse pos tester
-      Vector2 mouse_pos = GetScreenToWorld2D(GetMousePosition(), camera);
-      int mouse_tile_x = world_pos_to_tile_pos(mouse_pos.x);
-      int mouse_tile_y = world_pos_to_tile_pos(mouse_pos.y);
+      Vector2 mouse_pos_world = GetScreenToWorld2D(GetMousePosition(), camera);
+      printf("(%.2f - %.2f) \n", mouse_pos_world.x, mouse_pos_world.y);
+      int mouse_tile_x = world_pos_to_tile_pos(mouse_pos_world.x);
+      int mouse_tile_y = world_pos_to_tile_pos(mouse_pos_world.y);
 
       // :tile rendering
       {
@@ -297,48 +304,81 @@ int main() {
               float x_pos = x * tile_width;
               float y_pos = y * tile_width;
               Color tile_color = WHITE;
-              if (x == mouse_tile_x && y == mouse_tile_y) {
-                //  tile_color = BLUE;
-              }
               DrawRectangle(x_pos + (tile_width * -0.5),
                             y_pos + (tile_width * -0.5), tile_width, tile_width,
                             tile_color);
             }
           }
         }
+
+        /* DrawRectangle(tile_pos_to_world_pos(mouse_tile_x) + (tile_width *
+         * -0.5), */
+        /*               tile_pos_to_world_pos(mouse_tile_y) + (tile_width *
+         * -0.5), */
+        /*               tile_width, tile_width, BLUE); */
       }
+
+      // :mouse pos tester
       {
+        float smallest_dist = INFINITY;
 
         for (int i = 0; i < MAX_ENTITY_COUNT; i++) {
           Entity *en = &world->entities[i];
           if (en->is_valid) {
             Sprite *sprite = get_sprite(en->sprite_id);
-            Range2 bounds = range2_make_bottom_happen(sprite->size);
-            bounds = range2_shift(bounds, en->pos);
-            Vector2 rect_size = range2_size(bounds);
-            if (range2_contains(bounds, mouse_pos)) {
-              DrawRectangle(bounds.min.x, bounds.min.y, rect_size.x,
-                            rect_size.y, RED);
+
+            float dist = fabsf(Vector2Distance(en->pos, mouse_pos_world));
+            if (dist < entity_selection_radius) {
+
+              if (!world_frame.selected_entity || (dist < smallest_dist)) {
+                world_frame.selected_entity = en;
+                smallest_dist = dist;
+              }
+
+              /* int entity_tile_x = world_pos_to_tile_pos(en->pos.x); */
+              /* int entity_tile_y = world_pos_to_tile_pos(en->pos.y); */
+
+              /* DrawRectangle(tile_pos_to_world_pos(entity_tile_x), */
+              /*               tile_pos_to_world_pos(entity_tile_y), tile_width,
+               */
+              /*               tile_width, BLUE); */
             }
+            /* Range2 bounds = range2_make_bottom_happen(sprite->size); */
+            /* bounds = range2_shift(bounds, en->pos); */
+            /* bounds.min = Vector2Subtract(bounds.min,
+             * (Vector2){10.0f, 10.0f}); */
+            /* bounds.max = Vector2Add(bounds.max, (Vector2){10.0f, 10.0f}); */
+            /* Vector2 rect_size = range2_size(bounds); */
+            /* if (range2_contains(bounds, mouse_pos)) { */
+            /*   DrawRectangle(bounds.min.x, bounds.min.y, rect_size.x, */
+            /*                 rect_size.y, RED); */
+            /* } */
           }
         }
-        printf("%f, %f\n", mouse_pos.x, mouse_pos.y);
       }
 
-      for (int i = 0; i < MAX_ENTITY_COUNT; i++) {
-        Entity *en = &world->entities[i];
-        if (en->is_valid) {
-          switch (en->type) {
-          default: {
-            Sprite *sprite = get_sprite(en->sprite_id);
-            Vector2 pos = Vector2AddValue(en->pos, tile_width * -0.5);
-            DrawTexture(sprite->image, en->pos.x - (sprite->size.x / 2.0f),
-                        en->pos.y, WHITE);
-            char pos_string[100];
-            sprintf(pos_string, "(%.2f - %.2f)", en->pos.x, en->pos.y);
-            DrawText(pos_string, en->pos.x + 10, en->pos.y + 10, 5, BLACK);
-            break;
-          }
+      // :render
+      {
+        for (int i = 0; i < MAX_ENTITY_COUNT; i++) {
+          Entity *en = &world->entities[i];
+          if (en->is_valid) {
+            switch (en->type) {
+            default: {
+              Sprite *sprite = get_sprite(en->sprite_id);
+              Color entity_color = WHITE;
+              if (world_frame.selected_entity == en) {
+                entity_color = RED;
+              }
+              DrawTexture(sprite->image, en->pos.x - (sprite->size.x / 2.0f),
+                          en->pos.y - (sprite->size.y / 2.0f), entity_color);
+
+              /* char pos_string[100]; */
+              /* sprintf(pos_string, "(%.2f - %.2f)", en->pos.x, en->pos.y); */
+              /* DrawText(pos_string, en->pos.x + 10, en->pos.y + 10, 5, BLACK);
+               */
+              break;
+            }
+            }
           }
         }
       }
