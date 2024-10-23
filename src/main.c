@@ -48,6 +48,9 @@ misrepresented
 
 #define MAX_ENTITY_COUNT 1024
 const float entity_selection_radius = 16.0f;
+const int PLAYER_HEALTH = 10;
+const int TROLL_HEALTH = 3;
+const int GOBLIN_HEALTH = 3;
 
 bool almost_equals(float a, float b, float epsilon) {
   return fabs(a - b) <= epsilon;
@@ -116,6 +119,7 @@ typedef struct Entity {
   Texture *sprite;
   EntityArcheType type;
   SpriteId sprite_id;
+  int health;
 } Entity;
 
 // maybe make this into an x macro
@@ -154,18 +158,22 @@ void destroy_entity(Entity *en) { memset(en, 0, sizeof(Entity)); }
 void setup_troll(Entity *en) {
   en->type = arch_troll;
   en->sprite_id = SPRITE_TROLL;
+  en->health = TROLL_HEALTH;
   //...
 }
 
 void setup_player(Entity *en) {
   en->type = arch_player;
   en->sprite_id = SPRITE_PLAYER;
+
+  en->health = PLAYER_HEALTH;
   //...
 }
 
 void setup_goblin(Entity *en) {
   en->type = arch_goblin;
   en->sprite_id = SPRITE_GOBLIN;
+  en->health = GOBLIN_HEALTH;
   //...
 }
 
@@ -232,33 +240,23 @@ int main() {
       player_entity->pos.x + (sprites[SPRITE_PLAYER].image.width / 2.0f),
       player_entity->pos.y + (sprites[SPRITE_PLAYER].image.height / 2.0f)};
 
+  Vector2 input_axis = {0, 0};
+
+  Vector2 terminal_point = {0};
+  const int player_movement_radius = 1;
   //  game loop
   while (!WindowShouldClose()) // run the loop untill the user presses ESCAPE or
   {
 
     world_frame = (WorldFrame){0};
-    // update player position
-    Vector2 input_axis = {0, 0};
-
-    if (IsKeyDown(KEY_W)) {
-      input_axis.y -= 1;
+    { //: input
+      if (Vector2Distance(player_entity->pos, terminal_point) <
+          player_movement_radius) {
+        input_axis = (Vector2){0, 0};
+        terminal_point = (Vector2){0, 0};
+      }
     }
-    if (IsKeyDown(KEY_A)) {
-
-      input_axis.x -= 1;
-    }
-    if (IsKeyDown(KEY_S)) {
-
-      input_axis.y += 1;
-    }
-    if (IsKeyDown(KEY_D)) {
-
-      input_axis.x += 1;
-    }
-
-    input_axis = Vector2Normalize(input_axis);
-    player_entity->pos = Vector2Add(
-        player_entity->pos, Vector2Scale(input_axis, 100.0 * GetFrameTime()));
+    //
 
     // camera stuff
     {
@@ -284,7 +282,8 @@ int main() {
       BeginMode2D(camera);
 
       Vector2 mouse_pos_world = GetScreenToWorld2D(GetMousePosition(), camera);
-      printf("(%.2f - %.2f) \n", mouse_pos_world.x, mouse_pos_world.y);
+
+      // printf("(%.2f - %.2f) \n", mouse_pos_world.x, mouse_pos_world.y);
       int mouse_tile_x = world_pos_to_tile_pos(mouse_pos_world.x);
       int mouse_tile_y = world_pos_to_tile_pos(mouse_pos_world.y);
 
@@ -318,7 +317,7 @@ int main() {
         /*               tile_width, tile_width, BLUE); */
       }
 
-      // :mouse pos tester
+      // :mouse :selector
       {
         float smallest_dist = INFINITY;
 
@@ -356,6 +355,33 @@ int main() {
           }
         }
       }
+
+      // :click handler
+      {
+
+        bool is_mouse_left_pressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        Entity *selected_entity = world_frame.selected_entity;
+
+        if (is_mouse_left_pressed) {
+          // consume button pressed
+          is_mouse_left_pressed = false;
+
+          if (selected_entity) {
+            selected_entity->health -= 1;
+            if (selected_entity->health <= 0) {
+              destroy_entity(selected_entity);
+            }
+          }
+
+        } else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+          terminal_point = mouse_pos_world;
+          input_axis = Vector2Subtract(terminal_point, player_entity->pos);
+        }
+      }
+
+      input_axis = Vector2Normalize(input_axis);
+      player_entity->pos = Vector2Add(
+          player_entity->pos, Vector2Scale(input_axis, 100.0 * GetFrameTime()));
 
       // :render
       {
