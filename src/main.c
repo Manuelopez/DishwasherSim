@@ -47,7 +47,8 @@ misrepresented
 #include <stdbool.h>
 
 #define MAX_ENTITY_COUNT 1024
-const float entity_selection_radius = 16.0f;
+#define MAX_HAND_COUNT 40
+const float entity_selection_radius = 10.0f;
 const int PLAYER_HEALTH = 10;
 const int TROLL_HEALTH = 3;
 const int GOBLIN_HEALTH = 3;
@@ -101,7 +102,6 @@ typedef enum EntityArcheType {
 
 typedef struct Sprite {
   Texture image;
-  Vector2 size;
 } Sprite;
 
 typedef enum SpriteId {
@@ -116,11 +116,14 @@ typedef enum SpriteId {
 typedef struct Entity {
   Vector2 pos;
   bool is_valid;
-  Texture *sprite;
   EntityArcheType type;
   SpriteId sprite_id;
   int health;
 } Entity;
+
+typedef struct Hand {
+  Entity cards[MAX_HAND_COUNT];
+} Hand;
 
 // maybe make this into an x macro
 typedef struct World {
@@ -131,9 +134,29 @@ typedef struct WorldFrame {
   Entity *selected_entity;
 
 } WorldFrame;
-WorldFrame world_frame = {0};
 
+WorldFrame world_frame = {0};
 World *world = 0;
+Hand *hand = {0};
+
+Entity *create_card_in_hand() {
+  Entity *entity_found = 0;
+
+  for (int i = 0; i < MAX_HAND_COUNT; i++) {
+    Entity *existing_entity = &hand->cards[i];
+    if (!existing_entity->is_valid) {
+      entity_found = existing_entity;
+      break;
+    }
+  }
+
+  //  assert(entity_found, "No more free entities");
+  assert(entity_found);
+
+  entity_found->is_valid = true;
+
+  return entity_found;
+}
 
 Entity *create_entity() {
   Entity *entity_found = 0;
@@ -186,6 +209,13 @@ Sprite *get_sprite(SpriteId id) {
   return &sprites[0];
 }
 
+// cards
+void setup_card_fireball(Entity *en) {
+  en->type = arch_card_fireball;
+  en->sprite_id = SPRITE_CARD_FIREBALL;
+  //..
+}
+
 int main() {
   // init window
   SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
@@ -199,19 +229,28 @@ int main() {
   // set up golbal variables
 
   world = (World *)malloc(sizeof(World));
-  if (world == NULL) {
+  hand = (Hand *)malloc(sizeof(Hand));
+
+  if (world == NULL || hand == NULL) {
     fprintf(stderr, "Memory allocation failed\n");
     return 1;
   }
   for (int i = 0; i < MAX_ENTITY_COUNT; i++) {
     world->entities[i] = (Entity){.is_valid = false};
   }
-  sprites[SPRITE_PLAYER] =
-      (Sprite){.image = LoadTexture("player.png"), .size = (Vector2){10, 19}};
-  sprites[SPRITE_TROLL] =
-      (Sprite){.image = LoadTexture("troll.png"), .size = (Vector2){8, 14}};
-  sprites[SPRITE_GOBLIN] =
-      (Sprite){.image = LoadTexture("goblin.png"), .size = (Vector2){8, 14}};
+
+  for (int i = 0; i < MAX_HAND_COUNT; i++) {
+    hand->cards[i] = (Entity){.is_valid = false};
+  }
+
+  Entity *card_fireball_test = create_entity();
+  setup_card_fireball(card_fireball_test);
+
+  sprites[SPRITE_PLAYER] = (Sprite){.image = LoadTexture("player.png")};
+  sprites[SPRITE_TROLL] = (Sprite){.image = LoadTexture("troll.png")};
+  sprites[SPRITE_GOBLIN] = (Sprite){.image = LoadTexture("goblin.png")};
+  sprites[SPRITE_CARD_FIREBALL] =
+      (Sprite){.image = LoadTexture("card_fireball.png")};
 
   // entities
   for (int i = 0; i < 2; i++) {
@@ -247,6 +286,19 @@ int main() {
   //  game loop
   while (!WindowShouldClose()) // run the loop untill the user presses ESCAPE or
   {
+    // tester card hand
+    card_fireball_test->pos =
+        (Vector2){camera.target.x,
+                  camera.target.y +
+                      ((1.0f / 3.0f *
+                        ((screen_height / 2.0f) -
+                         (sprites[SPRITE_CARD_FIREBALL].image.height / 2.0f))) -
+                       5)};
+
+    /* (camera.target.y + */
+    /*                            ((screen_height / 2.0f) -
+     * sprite->image.height * 3) * */
+    /*                                (1 / 3.0f)), */
 
     world_frame = (WorldFrame){0};
     { //: input
@@ -269,7 +321,7 @@ int main() {
        */
       /*     player_entity->pos.y + (sprites[SPRITE_PLAYER].image.height)
        * / 2.0f}; */
-      animate_v2_to_target(&camera.target, target, GetFrameTime(), 3.0f);
+      animate_v2_to_target(&camera.target, target, GetFrameTime(), 30.0f);
     }
 
     // begin drawind
@@ -389,14 +441,31 @@ int main() {
           Entity *en = &world->entities[i];
           if (en->is_valid) {
             switch (en->type) {
+            case arch_card_fireball: {
+              Sprite *sprite = get_sprite(en->sprite_id);
+              Color entity_color = WHITE;
+              if (world_frame.selected_entity == en) {
+                entity_color = RED;
+              }
+              DrawTexture(
+                  sprite->image, (en->pos.x - (sprite->image.width / 2.0f)),
+                  en->pos.y - (sprite->image.height / 2.0f), entity_color);
+              break;
+
+              /* (camera.target.y + */
+              /*                            ((screen_height / 2.0f) -
+               * sprite->image.height * 3) * */
+              /*                                (1 / 3.0f)), */
+            }
             default: {
               Sprite *sprite = get_sprite(en->sprite_id);
               Color entity_color = WHITE;
               if (world_frame.selected_entity == en) {
                 entity_color = RED;
               }
-              DrawTexture(sprite->image, en->pos.x - (sprite->size.x / 2.0f),
-                          en->pos.y - (sprite->size.y / 2.0f), entity_color);
+              DrawTexture(
+                  sprite->image, en->pos.x - (sprite->image.width / 2.0f),
+                  en->pos.y - (sprite->image.height / 2.0f), entity_color);
 
               /* char pos_string[100]; */
               /* sprintf(pos_string, "(%.2f - %.2f)", en->pos.x, en->pos.y); */
